@@ -7,6 +7,7 @@ module Conduit.Component.Router where
 
 import Prelude
 
+import Component.Lazy (importHome)
 import Conduit.Capability.LogMessages (class LogMessages)
 import Conduit.Capability.Navigate (class Navigate, navigate)
 import Conduit.Capability.Now (class Now)
@@ -18,7 +19,6 @@ import Conduit.Component.Utils (OpaqueSlot)
 import Conduit.Data.Profile (Profile)
 import Conduit.Data.Route (Route(..), routeCodec)
 import Conduit.Page.Editor as Editor
-import Conduit.Page.Home as Home
 import Conduit.Page.Login as Login
 import Conduit.Page.Profile (Tab(..))
 import Conduit.Page.Profile as Profile
@@ -29,6 +29,7 @@ import Conduit.Store as Store
 import Data.Either (hush)
 import Data.Foldable (elem)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff)
 import Halogen (liftEffect)
 import Halogen as H
@@ -39,6 +40,7 @@ import Halogen.Store.Select (selectEq)
 import Routing.Duplex as RD
 import Routing.Hash (getHash)
 import Type.Proxy (Proxy(..))
+
 
 data Query a
   = Navigate Route a
@@ -73,17 +75,19 @@ component
   => ManageArticle m
   => ManageComment m
   => ManageTag m
-  => H.Component Query Unit Void m
-component = connect (selectEq _.currentUser) $ H.mkComponent
-  { initialState: \{ context: currentUser } -> { route: Nothing, currentUser }
-  , render
-  , eval: H.mkEval $ H.defaultEval
-      { handleQuery = handleQuery
-      , handleAction = handleAction
-      , receive = Just <<< Receive
-      , initialize = Just Initialize
-      }
-  }
+  => Aff (H.Component Query Unit Void m)
+component = do
+  home <- importHome
+  pure $ connect (selectEq _.currentUser) $ H.mkComponent
+    { initialState: \{ context: currentUser } -> { route: Nothing, currentUser }
+    , render: render home
+    , eval: H.mkEval $ H.defaultEval
+        { handleQuery = handleQuery
+        , handleAction = handleAction
+        , receive = Just <<< Receive
+        , initialize = Just Initialize
+        }
+    }
   where
   handleAction :: Action -> H.HalogenM State Action ChildSlots Void m Unit
   handleAction = case _ of
@@ -118,11 +122,11 @@ component = connect (selectEq _.currentUser) $ H.mkComponent
     Just _ ->
       html
 
-  render :: State -> H.ComponentHTML Action ChildSlots m
-  render { route, currentUser } = case route of
+  -- render :: H.Component _ Unit _ m -> State -> H.ComponentHTML Action ChildSlots m
+  render home { route, currentUser } = case route of
     Just r -> case r of
       Home ->
-        HH.slot_ (Proxy :: _ "home") unit Home.component unit
+        HH.slot_ (Proxy :: _ "home") unit home.component unit
       Login ->
         HH.slot_ (Proxy :: _ "login") unit Login.component { redirect: true }
       Register ->

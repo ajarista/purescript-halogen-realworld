@@ -9,7 +9,7 @@
     "build": "spago build",
     "watch": "spago build --watch",
     "serve": "http-server dist",
-    "serve-dev": "parcel dev/index.html --open",
+    "serve-dev": "parcel dev/index.html",
     "test": "spago test",
     "bundle:build": "spago build --purs-args '--codegen corefn'",
     "bundle:dce": "zephyr -f Main.main",
@@ -22,7 +22,9 @@
   },
   "devDependencies": {
     "http-server": "^0.12.3",
-    "parcel": "^2.0.0-beta.1"
+    "parcel": "^2.0.0-beta.1",
+    "purescript": "^0.14.1",
+    "spago": "^0.20.3"
   },
   "dependencies": {
     "decimal.js": "^10.2.0",

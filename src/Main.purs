@@ -101,6 +101,9 @@ main = HA.runHalogenAff do
     initialStore :: Store
     initialStore = { baseUrl, logLevel, currentUser }
 
+  -- The router component is lazily loaded
+  routedComponent <- Router.component
+  
   -- With our app environment ready to go, we can prepare the router to run as our root component.
   --
   -- But wait! Our router is configured to run in a monad that supports all our capabilities like
@@ -110,7 +113,7 @@ main = HA.runHalogenAff do
   -- But Halogen only knows how to run components in the `Aff` (asynchronous effects) monad. `Aff`
   -- has no idea how to interpret our capabilities. We need a way to change our router component so
   -- that it runs in `Aff` instead of `AppM`. We can do that with `runAppM`:
-  rootComponent <- runAppM initialStore Router.component
+  rootComponent <- runAppM initialStore routedComponent
 
   -- Now we have the two things we need to run a Halogen application: a reference to an HTML element
   -- and the component to run there.
